@@ -18,9 +18,9 @@ from tf_agents.trajectories import time_step as ts
 REWARD_DEFAULT = {
     "game_success_reward": 1.00,
     "lose_reward": -1.00,
-    "guess_success_reward": 0.05,
-    "guess_fail_reward": -0.05,
-    "guess_repeat_reward": -5.00,
+    "guess_success_reward": 0.02,
+    "guess_fail_reward": -0.01,
+    "guess_repeat_reward": -0.05,
 }
 DICTIONARY_PATH_DEFAULT = "properties/words_250000_train.txt"
 
@@ -92,7 +92,7 @@ class HangmanEnvironment(py_environment.PyEnvironment):
             logging.debug(f"You Found {self.word_to_guess}")
             return ts.termination(
                 np.array([self._state], dtype=np.int32),
-                self.reward_map["game_success_reward"],
+                self.number_of_life * self.reward_map["game_success_reward"],
             )
         else:
             self.render()
@@ -120,6 +120,24 @@ class HangmanEnvironment(py_environment.PyEnvironment):
                 discount=1.0,
             )
 
+    def _repeated_letter(self, action, action_letter):
+        self.number_of_life -= 1
+        if self.number_of_life == 0:
+            logging.debug(f"You did not found {self.word_to_guess}")
+            self._episode_ended = True
+            return ts.termination(
+                np.array([self._state], dtype=np.int32), self.reward_map["lose_reward"]
+            )
+
+        else:
+            self.render()
+            logging.debug("letter repeated")
+            return ts.transition(
+                np.array([self._state], dtype=np.int32),
+                reward=self.reward_map["guess_repeat_reward"],
+                discount=1.0,
+            )
+
     def _step(self, action):
 
         if self._episode_ended:
@@ -134,11 +152,13 @@ class HangmanEnvironment(py_environment.PyEnvironment):
         if action not in self.guessed_letters:
             self.guessed_letters.append(action)
         else:
-            logging.debug("letter repeated")
-            return ts.transition(
-                np.array([self._state], dtype=np.int32),
-                self.reward_map["guess_repeat_reward"],
-            )
+            return self._repeated_letter(action, action_letter)
+            # logging.debug("letter repeated")
+            # self.number_of_life -= 1
+            # return ts.transition(
+            #     np.array([self._state], dtype=np.int32),
+            #     self.reward_map["guess_repeat_reward"],
+            # )
 
         if action_letter in self.word_to_guess:
             return self._success(action, action_letter)
