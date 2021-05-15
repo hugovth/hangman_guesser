@@ -1,4 +1,5 @@
 {
     "python.pythonPath": "C:\\Users\\hugov\\miniconda3\\envs\\ml\\python.exe",
-    "jupyter.jupyterServerType": "local"
+    "jupyter.jupyterServerType": "local",
+    "python.formatting.provider": "black"
 }

@@ -135,7 +135,7 @@ class HangmanEnvironment(py_environment.PyEnvironment):
             return ts.transition(
                 np.array([self._state], dtype=np.int32),
                 reward=self.reward_map["guess_repeat_reward"],
-                discount=1.0,
+                discount=0.9,
             )
 
     def _step(self, action):
